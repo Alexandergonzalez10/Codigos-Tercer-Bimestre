@@ -1,0 +1,36 @@
+/* 
+  Fundación Kinal
+    Centro educativo Técncico Laboral Kinal
+    Quinto Perito
+    Quinto Electrónica 
+    Codigo Técnico: EB5AM
+    Curso: Taller de Electrónica Digital y reparación de computadoras
+    Proyecto: Comunicación serial y visualización
+    Dev: Alexander González 2020414
+    Fecha: 16 de julio de 2024
+*/
+
+﻿#include <SoftwareSerial.h> 
+SoftwareSerial blue (10, 11); 
+void setup() { 
+  Serial.begin(9600);
+  Serial.println("Listo");
+  blue.begin(38400); 
+  pinMode (12, OUTPUT);
+}
+char recepcion;
+void loop() {
+  if(blue.available() ) {
+  //Serial.write (blue.read());
+  recepcion-blue.read(); 
+  Serial.println(recepcion); 
+  if( recepcion=='1') {
+    Serial.println("ENCENDER");
+    digitalWrite(12, HIGH);
+  }
+  if( recepcion='2' ){
+    Serial.println("APAGAR");
+    digitalWrite(12, LOW);
+}
+  }
+}
