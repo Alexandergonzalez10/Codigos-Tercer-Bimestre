@@ -11,55 +11,52 @@
 */
 
 // Librerías
-#include <Wire.h>                   // Librería para usar el protocolo i2c
+#include <Wire.h>                   // Librería para usar el protocolo I2C
 #include <SparkFun_ADXL345.h>       // Librería para usar el acelerómetro ADXL345
 #include <SoftwareSerial.h>         // Librería para emular otro puerto serie
 #include <DFRobotDFPlayerMini.h>    // Librería para usar el reproductor MP3
 
 // Constructores
-ADXL345 acc_sismo = ADXL345();          // Constructor para usar el acelerómetro
-SoftwareSerial mp3_sismo(A0, A1);       // RX A0 y TX A1
+ADXL345 acc_sismo = ADXL345();          // Constructor para el acelerómetro
+SoftwareSerial mp3_sismo(2, 3);         // RX en 2 y TX en 3
 DFRobotDFPlayerMini reproductor_MP3;    // Constructor para el reproductor MP3
 
-// Definición de pines para LEDs
-#define LED_BAR_START 2
-#define LED_BAR_END 11
-
 // Variables
-unsigned int acc_X;         // Aceleración en el eje x
-unsigned int acc_Y;         // Aceleración en el eje y
-unsigned int acc_Z;         // Aceleración en el eje z
+int acc_X;    // Aceleración en el eje X
+int acc_Y;    // Aceleración en el eje Y
+int acc_Z;    // Aceleración en el eje Z
+float magnitud_acc;    // Magnitud del vector aceleración
 
-// Variable donde guardo la magnitud del vector aceleración
-float magnitud_acc;
+// Pines de la barra de LEDs
+const int ledPins[] = {4, 5, 6, 7, 8, 9, 10, 11, 12}; // Pines a los que están conectados los LEDs
+const int numLeds = sizeof(ledPins) / sizeof(ledPins[0]); // Número total de LEDs en la barra
 
 // Configuraciones
 void setup() {
-  Serial.begin(9600);              // Inicio la comunicación serial del Arduino hacia la computadora
-  mp3_sismo.begin(9600);           // Inicio la comunicación serial emulada para el mp3
-  acc_sismo.powerOn();             // Enciendo el acelerómetro
-  acc_sismo.setRangeSetting(8);    // Configuro la sensibilidad del acelerómetro
+  Serial.begin(9600);             // Inicio la comunicación serial del Arduino hacia la computadora
+  mp3_sismo.begin(9600);          // Inicio la comunicación serial emulada para el MP3
+  acc_sismo.powerOn();            // Enciendo el acelerómetro
+  acc_sismo.setRangeSetting(8);   // Configuro la sensibilidad del acelerómetro
 
-  // Compruebo si hay conexión con el módulo mp3
+  // Configuro los pines de la barra de LEDs como salidas
+  for (int i = 0; i < numLeds; i++) {
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW); // Apaga todos los LEDs al inicio
+  }
+
+  // Compruebo si hay conexión con el módulo MP3
   if (!reproductor_MP3.begin(mp3_sismo)) { 
-    // Si no existe, me quedo aquí siempre. Ya no avanzo en el código
-    Serial.println("No he podido comunicarme con el modulo MP3");
+    Serial.println("No he podido comunicarme con el módulo MP3");
     while (1);
   }
-  
-  // Si la comunicación ha sido exitosa, avanzo
-  reproductor_MP3.volume(10);       // Volumen al máximo
-  Serial.println("Comunicacion exitosa con el reproductor MP3");
-  Serial.println("Practica 2");
-  Serial.println("Reproduzco la primera cancion");
-  reproductor_MP3.play(1);          // Reproduzco la primera canción
-  delay(100);
 
-  // Configuración de pines de salida para la barra de LEDs
-  for (int i = LED_BAR_START; i <= LED_BAR_END; i++) {
-    pinMode(i, OUTPUT);
-    digitalWrite(i, LOW);           
-  }
+  // Si la comunicación ha sido exitosa, avanzo
+  reproductor_MP3.volume(10);      // Volumen al máximo
+  Serial.println("Comunicación exitosa con el reproductor MP3");
+  Serial.println("Práctica 2 - Ayuda profe Alejandro");
+  Serial.println("Reproduzco la primera canción");
+  reproductor_MP3.play(1);        // Reproduzco la primera canción (001.mp3)
+  delay(100);
 }
 
 void loop() {
@@ -68,29 +65,27 @@ void loop() {
 
   // Obtengo la magnitud del vector aceleración
   magnitud_acc = sqrtf((acc_X * acc_X) + (acc_Y * acc_Y) + (acc_Z * acc_Z));
-  
-  int mapeo_intensidad = map(magnitud_acc, 47, 75, 0, 10);
 
-  // Mostrar la intensidad en la barra de LEDs
-  showIntensity(mapeo_intensidad);
+  // Mapea la magnitud de la aceleración a un rango de 0 a 9 (para 9 LEDs)
+  int mapeo_intensidad = map(magnitud_acc, 47, 75, 0, numLeds);
 
-  // Activar alarma sonora si la intensidad es mayor a 6 (nivel VI en escala de Mercalli)
-  if (mapeo_intensidad > 6) {
-    reproductor_MP3.play(1); // Número de archivo de sonido en tu tarjeta SD
+  // Actualiza la barra de LEDs según la intensidad del sismo
+  for (int i = 0; i < numLeds; i++) {
+    if (i < mapeo_intensidad) {
+      digitalWrite(ledPins[i], HIGH);  // Enciende el LED
+    } else {
+      digitalWrite(ledPins[i], LOW);   // Apaga el LED
+    }
   }
 
-  delay(1000); // Intervalo de lectura y procesamiento
+  // Activa la alarma sonora si el nivel es mayor o igual a 6
+  if (mapeo_intensidad >= 6) {
+    digitalWrite(13, HIGH);  // Enciende la bocina
+    delay(500);              // Espera por 500 ms
+    digitalWrite(13, LOW);   // Apaga la bocina
+    delay(500);              // Espera por 500 ms
+  }
+
+  delay(1000);  // Espera 1 segundo antes de leer nuevamente
 }
 
-// Función para mostrar la intensidad en la barra de LEDs
-void showIntensity(int intensity) {
-  // Apaga todos los LEDs primero
-  for (int i = LED_BAR_START; i <= LED_BAR_END; i++) {
-    digitalWrite(i, LOW);
-  }
-  
-  // Enciende los LEDs según la intensidad
-  for (int i = LED_BAR_START; i < LED_BAR_START + intensity; i++) {
-    digitalWrite(i, HIGH);
-  }
-}
