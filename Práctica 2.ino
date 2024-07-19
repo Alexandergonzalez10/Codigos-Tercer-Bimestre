@@ -5,7 +5,7 @@
     Quinto Electrónica 
     Codigo Técnico: EB5AM
     Curso: Taller de Electrónica Digital y reparación de computadoras
-    Proyecto: Comunicación serial y visualización
+    Proyecto: Alarma
     Dev: Alexander González 2020414
     Fecha: 16 de julio de 2024
 */
