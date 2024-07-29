@@ -1,3 +1,15 @@
+/* 
+  Fundación Kinal
+    Centro educativo Técncico Laboral Kinal
+    Quinto Perito
+    Quinto Electrónica 
+    Codigo Técnico: EB5AM
+    Curso: Taller de Electrónica Digital y reparación de computadoras
+    Proyecto: RFID
+    Dev: Alexander González 2020414
+    Fecha: 29 de julio de 2024
+*/
+
 #include <MFRC522.h>
 #include <SPI.h>
 
